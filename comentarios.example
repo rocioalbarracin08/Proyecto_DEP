@@ -1,0 +1,64 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <MFRC522.h>  // Biblioteca para manejar el módulo RFID MFRC522. Permite leer tarjetas RFID vía SPI.
+
+// Pines para el módulo RFID
+#define SS_PIN 5   // Pin de selección de esclavo (Slave Select) para SPI.
+#define RST_PIN 22 // Pin de reset para el módulo RFID.
+MFRC522 rfid(SS_PIN, RST_PIN);  // Crea objeto rfid con pines definidos. Controla la comunicación con el lector RFID.
+
+// Configuración WiFi y API
+const char* ssid = "tu_wifi";
+const char* password = "tu_password";
+const char* serverUrl = "http://localhost/registro";  // Cambia a tu URL de la API en Python.
+
+void setup() {
+    Serial.begin(115200);
+    SPI.begin();  // Inicia comunicación SPI, necesaria para el módulo RFID.
+    rfid.PCD_Init();  // Inicializa el lector RFID (PCD = Proximity Coupling Device). Prepara el módulo para detectar tarjetas.
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+    }
+    Serial.println("Conectado a WiFi");
+}
+
+void loop() {
+    // Verifica si hay una nueva tarjeta presente y si se puede leer.
+    if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
+        return;  // Si no hay tarjeta o no se lee, sale del loop.
+    }
+    
+    // Lee el UID (identificador único) de la tarjeta RFID.
+    // El UID es un array de bytes que identifica la tarjeta.
+    String uid = "";
+    for (byte i = 0; i < rfid.uid.size; i++) {
+        uid += String(rfid.uid.uidByte[i], HEX);  // Convierte cada byte a hexadecimal y lo concatena.
+    }
+    Serial.println("UID leído: " + uid);  // Imprime el UID para depuración.
+    
+    // Mapea el UID a un id_empleado (en producción, usa una lista o API para esto).
+    // Ejemplo: Si UID es "ABC123", asigna id_empleado = 1.
+    int id_empleado = 1;  // Hardcodeado; cambia según tu lógica.
+    
+    // Envía datos a la API vía HTTP POST.
+    if (WiFi.status() == WL_CONNECTED) {
+        HTTPClient http;
+        http.begin(serverUrl);
+        http.addHeader("Content-Type", "application/json");
+        
+        // Crea JSON con datos: id_empleado y tipo (entrada/salida).
+        String jsonData = "{\"id_empleado\":" + String(id_empleado) + ", \"tipo\":\"entrada\"}";
+        int httpResponseCode = http.POST(jsonData);  // Envía POST a la API.
+        
+        if (httpResponseCode > 0) {
+            Serial.println("Respuesta API: " + http.getString());  // Imprime respuesta de la API.
+        } else {
+            Serial.println("Error en envío a API");
+        }
+        http.end();
+    }
+    
+    rfid.PICC_HaltA();  // Detiene la comunicación con la tarjeta actual para evitar lecturas repetidas.
+    delay(2000);  // Pausa para evitar lecturas múltiples rápidas.
+}
