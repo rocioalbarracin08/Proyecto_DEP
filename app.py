@@ -50,7 +50,7 @@ def mostrar_empleados():
             JOIN usuarios u ON e.id_empleado = u.id_empleado
         """)
         empleados = g.db_cursor.fetchall()
-        print(f"Empleados encontrados: {len(empleados)}")
+        print(f"Empleados encontrados: {len(empleados)}")  # mensaje de ayuda | Parece haber solo 1 empleado por alguna razón (el empleado no esta en usuarios)
         return jsonify(empleados)
     except Exception as e:
         return jsonify({"error": f"Error al listar empleados: {e}"}), 500
