@@ -62,7 +62,7 @@ def registrar_asistencia():
     
     try:
         data = request.get_json()
-        uid = data.get('uid')  # Ahora recibe 'uid' en lugar de 'id_empleado'
+        uid = data.get('id_llave')  # Ahora recibe 'uid' en lugar de 'id_empleado'
         tipo = data.get('tipo', 'entrada').lower()
         
         if not uid:
