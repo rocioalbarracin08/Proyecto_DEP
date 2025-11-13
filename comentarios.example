@@ -3,7 +3,6 @@
 #include <MFRC522.h>     // Biblioteca para leer tarjetas RFID (como un lector de códigos).
 #include <ArduinoJson.h>
 
-<<<<<<< HEAD
 // Pines para el módulo RFID
 #define SS_PIN 5   // Pin de selección de esclavo (Slave Select) para SPI.
 #define RST_PIN 18 // Pin de reset para el módulo RFID.
@@ -13,19 +12,6 @@ MFRC522 rfid(SS_PIN, RST_PIN);  // Crea objeto rfid con pines definidos. Control
 const char* ssid = "PEINE-3";
 const char* password = "etecPeine3";
 const char* serverUrl = "http://10.56.13.13:5000/registro";  // Cambia a tu URL de la API en Python.
-=======
-// Pines para el lector RFID (conecta cables aquí).
-#define SS_PIN 5   // Pin para seleccionar el lector RFID (naranja)
-#define RST_PIN 0  // Pin para resetear el lector RFID (amarillo)
-// Crea el objeto RFID con los pines.
-MFRC522 rfid(SS_PIN, RST_PIN);
-
-// Configura WiFi
-const char* ssid = "PEINE-3";  //NOMBRE DE RED
-const char* password = "etecPeine3";
-// URL de tu API Flask (corre Flask en localhost:5000).
-const char* serverUrl = "http://10.56.13.22:5000/registro";
->>>>>>> 300c169675213f1d1916969ece0feb2cd0f504a1
 
 void setup() {
   Serial.begin(115200);  // Inicia comunicación con la computadora (para ver mensajes).
