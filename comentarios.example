@@ -61,7 +61,6 @@ void loop() {
     } else {  // Si falló.
         Serial.println("Error al enviar");
     }
-<<<<<<< HEAD
     
     // Lee el UID (identificador único) de la tarjeta RFID.
     // El UID es un array de bytes que identifica la tarjeta.
@@ -94,12 +93,5 @@ void loop() {
     
     rfid.PICC_HaltA();  // Detiene la comunicación con la tarjeta actual para evitar lecturas repetidas.
     delay(2000);  // Pausa para evitar lecturas múltiples rápidas.
-}
-=======
-    http.end();  // Cierra la conexión.
   }
-
-  rfid.PICC_HaltA();  // Apaga la tarjeta para la próxima lectura.
-  delay(2000);        // Espera 2 segundos para no leer la misma tarjeta rápido.
 }
->>>>>>> 300c169675213f1d1916969ece0feb2cd0f504a1
