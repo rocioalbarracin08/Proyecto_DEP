@@ -5,13 +5,13 @@
 
 // Pines para el módulo RFID
 #define SS_PIN 5   // Pin de selección de esclavo (Slave Select) para SPI.
-#define RST_PIN 18 // Pin de reset para el módulo RFID.
+#define RST_PIN 17 // Pin de reset para el módulo RFID. -> CUIDADO CON ESTE PIN QUE ES CERCANO AL 18
 MFRC522 rfid(SS_PIN, RST_PIN);  // Crea objeto rfid con pines definidos. Controla la comunicación con el lector RFID.
 
 // Configuración WiFi y API
 const char* ssid = "PEINE-3";
 const char* password = "etecPeine3";
-const char* serverUrl = "http://10.56.13.13:5000/registro";  // Cambia a tu URL de la API en Python.
+const char* serverUrl = "http://10.56.13.13:5001/registro";  // Cambia a tu URL de la API en Python.
 
 void setup() {
   Serial.begin(115200);  // Inicia comunicación con la computadora (para ver mensajes).
