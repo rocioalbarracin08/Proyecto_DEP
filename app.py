@@ -69,7 +69,7 @@ def registrar_asistencia():
             return jsonify({"error": "Falta uid"}), 400
         
         if tipo not in ['entrada', 'salida']:
-            return jsonify({"error": "Tipo inválido. Solo 'entrada' o 'salida'"}), 400
+            return jsonify({"error": "Tipo invalido. Solo 'entrada' o 'salida'"}), 400
         
         # Busca id_empleado por UID
         g.db_cursor.execute("""
@@ -80,8 +80,8 @@ def registrar_asistencia():
         """, (uid,))
         empleado = g.db_cursor.fetchone()
         
-        if not empleado:
-            return jsonify({"error": "UID no asignado a ningún empleado"}), 404
+        if not empleado: #Para las tildes (usarlas en los mensajs de json, hacer un encabezado)
+            return jsonify({"error": "UID no asignado a ningun empleado"}), 404
         
         id_empleado = empleado['id_empleado']
         if not empleado['activo']:
@@ -97,7 +97,7 @@ def registrar_asistencia():
         """, (id_empleado, fecha, tipo))
         existing_same_type = g.db_cursor.fetchone()['count']
         if existing_same_type > 0:
-            return jsonify({"error": "El empleado ya marcó su asistencia del día"}), 409
+            return jsonify({"error": "El empleado ya marco su asistencia del dia"}), 409
         
         # Chequea el total de registros para ese empleado en la fecha (máximo 2)
         g.db_cursor.execute("""
@@ -106,7 +106,7 @@ def registrar_asistencia():
         """, (id_empleado, fecha))
         total_registros = g.db_cursor.fetchone()['count']
         if total_registros >= 2:
-            return jsonify({"error": "Máximo 2 registros por día alcanzado"}), 409
+            return jsonify({"error": "Maximo 2 registros por día alcanzado"}), 409
         
         # Verificación de tiempo mínimo para salida
         if tipo == 'salida':
@@ -122,7 +122,7 @@ def registrar_asistencia():
                 entrada_datetime = datetime.combine(fecha, hora_entrada_time)
                 diferencia = hora_actual - entrada_datetime
                 if diferencia < timedelta(hours=2):
-                    return jsonify({"error": "Hace un momento se registró, espere el mínimo de tiempo para poder retirarse o comuníquese con el dueño"}), 409
+                    return jsonify({"error": "Hace un momento se registro, espere el minimo de tiempo para poder retirarse o comuniquese con el dueño"}), 409
         
         # Inserta en la tabla asistencia
         query = "INSERT INTO asistencia (id_empleado, fecha, hora, tipo) VALUES (%s, %s, %s, %s)"

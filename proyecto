@@ -1,0 +1,92 @@
+#include <WiFi.h>        // conectar a WiFi
+#include <HTTPClient.h>  // enviar datos a la API (como mandar un mensaje).
+#include <MFRC522.h>     // Biblioteca para leer tarjetas RFID (como un lector de códigos).
+#include <ArduinoJson.h>
+
+// Pines para el módulo RFID
+#define SS_PIN_ENTRADA 5   // Pin de selección de esclavo (Slave Select) para SPI.
+#define RST_PIN_ENTRADA 17 // Pin de reset para el módulo RFID. -> CUIDADO CON ESTE PIN QUE ES CERCANO AL 18
+
+// Pines para el módulo RFID Salida
+#define SS_PIN_SALIDA 16   // SDA
+#define RST_PIN_SALIDA 4 
+MFRC522 rfidEntrada(SS_PIN_ENTRADA, RST_PIN_ENTRADA);  // Crea objeto rfid con pines definidos. Controla la comunicación con el lector RFID.
+MFRC522 rfidSalida(SS_PIN_SALIDA, RST_PIN_SALIDA);  // Crea objeto rfid con pines definidos. Controla la comunicación con el lector RFID.
+
+// Configuración WiFi y API
+const char* ssid = "PEINE-3";
+const char* password = "etecPeine3";
+const char* serverUrl = "http://10.56.13.26:5001/registro";  // Cambia a tu URL de la API en Python (cuando corremos en terminal)
+
+void setup() {
+  Serial.begin(115200);  // Inicia comunicación con la computadora (para ver mensajes).
+  SPI.begin();           // Inicia SPI (como un bus para conectar dispositivos).
+  rfidEntrada.PCD_Init();       // Enciende el lector RFID (lo prepara para leer tarjetas).
+  rfidSalida.PCD_Init();
+//Recomendacion, usar un while si no hay wifi
+  Serial.println("conectando a wifi");
+  WiFi.begin(ssid, password);              // Conecta a WiFi.
+  while (WiFi.status() != WL_CONNECTED) {  // Espera hasta conectar.
+  Serial.print(".");
+    delay(1000);                           // Espera 1 segundo.
+  }
+  Serial.println("Conectado a WiFi!");  // Mensaje de éxito.
+  Serial.println("setupok!");  // Mensaje de éxito.
+}
+
+void loop() {
+  if (WiFi.status() == WL_CONNECTED) {  // Si WiFi está conectado.
+    HTTPClient http;  // Crea objeto para enviar datos.
+    http.begin(serverUrl);  // Apunta a la API.
+    http.addHeader("Content-Type", "application/json");  // Dice que envía JSON.
+
+    JsonDocument doc;
+    String uid = "";  // Declaramos uid una sola vez aquí, fuera de los if.
+
+    bool tarjetaDetectada = false;  // Bandera para saber si procesamos algo.
+
+    //////// E N T R A D A ////////
+    if (rfidEntrada.PICC_IsNewCardPresent() && rfidEntrada.PICC_ReadCardSerial()) {
+      // Lee el código único de la tarjeta (UID).
+      uid = "";  // Reiniciamos uid.
+      for (byte i = 0; i < rfidEntrada.uid.size; i++) {
+        uid += String(rfidEntrada.uid.uidByte[i], HEX);
+      }
+      rfidEntrada.PICC_HaltA();  // Detiene la comunicación.
+      Serial.println("Tarjeta de entrada leída: " + uid);
+      doc["tipo"] = "entrada";
+      tarjetaDetectada = true;
+    }
+    //////// S A L I D A ////////
+    else if (rfidSalida.PICC_IsNewCardPresent() && rfidSalida.PICC_ReadCardSerial()) {
+      // Lee el código único de la tarjeta (UID).
+      uid = "";  // Reiniciamos uid.
+      for (byte i = 0; i < rfidSalida.uid.size; i++) {
+        uid += String(rfidSalida.uid.uidByte[i], HEX);
+      }
+      rfidSalida.PICC_HaltA();  // Detiene la comunicación.
+      Serial.println("Tarjeta de salida leída: " + uid);
+      doc["tipo"] = "salida";
+      tarjetaDetectada = true;
+    }
+
+    // Solo enviamos si detectamos una tarjeta.
+    if (tarjetaDetectada) {
+      doc["uid"] = uid;
+      
+      // Crea mensaje JSON.
+      String jsonData;
+      serializeJson(doc, jsonData);
+      int respuesta = http.POST(jsonData);  // Envía el mensaje.
+      
+      if (respuesta > 0) {  // Si envió bien.
+        Serial.println("Enviado a API: " + http.getString());  // Muestra respuesta.
+      } else {
+        Serial.println("Error al enviar (Código de error: " + String(respuesta) + ")");
+      }
+    }
+
+    http.end();
+    delay(2000);  // Pausa para evitar lecturas múltiples rápidas.
+  }
+}
